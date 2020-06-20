@@ -1,7 +1,7 @@
 {
-  "name": "seeance-cli",
+  "name": "seeance-analysis-core",
   "version": "0.0.14",
-  "description": "SDK for 'SEEance' educational version controlling data mining system.",
+  "description": "The actual analysis engine for SEEance.",
   "main": "bin/index.js",
   "scripts": {
     "test": "node ./test rmccue test-repository"
@@ -19,6 +19,6 @@
     "yargs": "^15.3.1"
   },
   "seeance": {
-    "type": "debug.datasource.git"
+
   }
 }
