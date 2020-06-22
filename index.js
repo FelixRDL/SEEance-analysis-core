@@ -1,8 +1,8 @@
-const ComponentProvider = require("./lib/component-provider");
 var git = require("simple-git").gitP;
 const pathLib = require("path");
 const fs = require("fs");
 const Visualisation = require("./lib/visualization");
+const ComponentProvider = require("./lib/component-provider");
 
 module.exports.ComponentProvider = ComponentProvider;
 /**
@@ -21,21 +21,12 @@ module.exports.ComponentProvider = ComponentProvider;
  * TODO: remove pkg from signature and use manifest instead (also pass name in signature)
  * TODO: datasources should be passed in, insteads of being loaded
  */
-module.exports.analyze = async function (repoOwner, repoName, preprocessors, analysis, token = undefined) {
-    const rp = await ComponentProvider({
-        token: token,
-        customRepositories: ['felixrdl/seeance-test']
-    });
-    const datasourceNames = analysis.pkg.seeance.depends_on;
+module.exports.analyze = async function (repoOwner, repoName, datasources, preprocessors, analysis, token = undefined) {
+
     // TODO: implement installing dependencies
-    await rp.init();
-
-    console.log(rp.listDatasources());
-
 
     // Acquire input data
     // TODO: implement caching
-    var datasources = datasourceNames.map(ds => rp.getDatasourceByName(ds));
 
     const githubDatasources = datasources.filter((ds) => ds['manifest']['type'].includes('github'));
     const gitDatasources = datasources.filter((ds) => ds['manifest']['type'].endsWith('git'));
