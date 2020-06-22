@@ -5,6 +5,7 @@ const Visualisation = require("./lib/visualization");
 const ComponentProvider = require("./lib/component-provider");
 
 module.exports.ComponentProvider = ComponentProvider;
+
 /**
  *
  * @param repoOwner
@@ -22,15 +23,14 @@ module.exports.ComponentProvider = ComponentProvider;
  * TODO: datasources should be passed in, insteads of being loaded
  */
 module.exports.analyze = async function (repoOwner, repoName, datasources, preprocessors, analysis, token = undefined) {
-
-    // TODO: implement installing dependencies
-
-    // Acquire input data
-    // TODO: implement caching
-
     const githubDatasources = datasources.filter((ds) => ds['manifest']['type'].includes('github'));
     const gitDatasources = datasources.filter((ds) => ds['manifest']['type'].endsWith('git'));
     const repoPath = await checkoutRepository(`https://github.com/${repoOwner}/${repoName}`);
+
+    // TODO: implement installing dependencies
+    // Acquire input data
+    // TODO: implement caching
+
     let input = await Promise.all(
         gitDatasources.map(async (ds) => {
             return {
@@ -47,7 +47,7 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
                 }
             }))
     );
-    input = input.reduce(function(acc, curr) {
+    input = input.reduce(function (acc, curr) {
         acc[curr.package.name] = curr.result;
         return acc;
     }, {});
@@ -55,6 +55,17 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
     // TODO: preprocessing
 
     return await analysis.module(input, analysis.config, Visualisation());
+}
+
+module.exports.getDependencies = function (preprocessors, analysis) {
+    const components = [analysis].concat(preprocessors);
+    var depDict = components.map((c) => c.pkg.seeance.depends_on).reduce((acc, curr) => {
+        for (let item of curr) {
+            acc[item] = item;
+        }
+        return acc;
+    }, {});
+    return Object.keys(depDict);
 }
 
 

@@ -7,13 +7,7 @@ async function test() {
     let rp = await ComponentProvider({
         customRepositories: ['felixrdl/seeance-test']
     });
-    await rp.init();
-    var dependencies = ['issues', 'milestones', 'git-authors'];
-    var datasources = dependencies.map(ds => rp.getDatasourceByName(ds));
-
-    core.analyze(process.argv[2], process.argv[3],
-        datasources,
-        [], {
+    let analysis = {
         config: {},
         pkg: {
             seeance: {
@@ -23,7 +17,15 @@ async function test() {
         module: async (input, config, visualisation) => {
             return "<h1>Sampleee</h1>"
         }
-    }).then(result => {
+    };
+    await rp.init();
+    var dependencies = core.getDependencies([], analysis);
+    console.log(dependencies);
+    var datasources = dependencies.map(ds => rp.getDatasourceByName(ds));
+
+    core.analyze(process.argv[2], process.argv[3],
+        datasources,
+        [], analysis).then(result => {
         console.log(result);
     }, error => {
         console.error(error);
