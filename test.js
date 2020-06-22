@@ -1,6 +1,6 @@
 const core = require('./index');
 
-core(process.argv[2], process.argv[3], [], {
+core.analyze(process.argv[2], process.argv[3], [], {
     config: {},
     pkg: {
         seeance: {

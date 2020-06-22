@@ -1,8 +1,10 @@
-const ComponentProvider = require("./lib/repository-provider");
+const ComponentProvider = require("./lib/component-provider");
 var git = require("simple-git").gitP;
 const pathLib = require("path");
 const fs = require("fs");
+const Visualisation = require("./lib/visualization");
 
+module.exports.ComponentProvider = ComponentProvider;
 /**
  *
  * @param repoOwner
@@ -15,16 +17,21 @@ const fs = require("fs");
  * }} analysis
  * @param token
  * @returns {Promise<void>}
+ *
+ * TODO: remove pkg from signature and use manifest instead (also pass name in signature)
+ * TODO: datasources should be passed in, insteads of being loaded
  */
-module.exports = async function (repoOwner, repoName, preprocessors, analysis, token = undefined) {
+module.exports.analyze = async function (repoOwner, repoName, preprocessors, analysis, token = undefined) {
     const rp = await ComponentProvider({
         token: token,
         customRepositories: ['felixrdl/seeance-test']
     });
     const datasourceNames = analysis.pkg.seeance.depends_on;
-
     // TODO: implement installing dependencies
     await rp.init();
+
+    console.log(rp.listDatasources());
+
 
     // Acquire input data
     // TODO: implement caching
@@ -32,7 +39,7 @@ module.exports = async function (repoOwner, repoName, preprocessors, analysis, t
 
     const githubDatasources = datasources.filter((ds) => ds['manifest']['type'].includes('github'));
     const gitDatasources = datasources.filter((ds) => ds['manifest']['type'].endsWith('git'));
-    const repoPath = await getRepository(`https://github.com/${repoOwner}/${repoName}`);
+    const repoPath = await checkoutRepository(`https://github.com/${repoOwner}/${repoName}`);
     let input = await Promise.all(
         gitDatasources.map(async (ds) => {
             return {
@@ -56,12 +63,11 @@ module.exports = async function (repoOwner, repoName, preprocessors, analysis, t
 
     // TODO: preprocessing
 
-    // TODO: pass in real visualisation object
-    return await analysis.module(input, analysis.config, {})
+    return await analysis.module(input, analysis.config, Visualisation());
 }
 
 
-async function getRepository(path, token = undefined) {
+async function checkoutRepository(path, token = undefined) {
     const localPath = pathLib.join(__dirname, '.repos');
     if (!fs.existsSync(localPath))
         fs.mkdirSync(localPath);
