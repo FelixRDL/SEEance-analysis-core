@@ -20,14 +20,12 @@ async function test() {
     };
     await rp.init();
     var dependencies = core.getDependencies([], analysis);
-    console.log(dependencies);
     var datasources = dependencies.map(ds => rp.getDatasourceByName(ds));
-
     core.analyze(process.argv[2], process.argv[3],
         datasources,
         [], analysis).then(result => {
         console.log(result);
     }, error => {
         console.error(error);
-    })
+    });
 }

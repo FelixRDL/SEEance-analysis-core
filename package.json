@@ -1,13 +1,10 @@
 {
   "name": "seeance-analysis-core",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "The actual analysis engine for SEEance.",
   "main": "bin/index.js",
   "scripts": {
     "test": "node ./test rmccue test-repository"
-  },
-  "bin": {
-    "seeance": "bin/index.js"
   },
   "keywords": [],
   "author": "",
