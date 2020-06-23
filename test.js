@@ -15,7 +15,11 @@ async function test() {
             }
         },
         module: async (input, config, visualisation) => {
-            return "<h1>Sampleee</h1>"
+            return visualisation.plot([{
+                x: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                y: [0, 3, 6, 4, 5, 2, 3, 5, 4],
+                type: 'scatter'
+            }], {}, "Some Plot");
         }
     };
     await rp.init();
