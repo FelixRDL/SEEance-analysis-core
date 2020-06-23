@@ -23,6 +23,7 @@ module.exports.ComponentProvider = ComponentProvider;
  * TODO: datasources should be passed in, insteads of being loaded
  */
 module.exports.analyze = async function (repoOwner, repoName, datasources, preprocessors, analysis, token = undefined) {
+    console.log(datasources);
     const githubDatasources = datasources.filter((ds) => ds['manifest']['type'].includes('github'));
     const gitDatasources = datasources.filter((ds) => ds['manifest']['type'].endsWith('git'));
     const repoPath = await checkoutRepository(`https://github.com/${repoOwner}/${repoName}`);
