@@ -48,10 +48,15 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
                 }
             }))
     );
+    // Convert input to dictionary
     input = input.reduce(function (acc, curr) {
         acc[curr.package.name] = curr.result;
         return acc;
     }, {});
+
+    for(let preprocessor of preprocessors) {
+        input = await preprocessor.module(input, preprocessor.config);
+    }
 
     // TODO: preprocessing
 
