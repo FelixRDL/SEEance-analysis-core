@@ -2,19 +2,23 @@ const http = require('http');
 const core = require('./index');
 const ComponentProvider = require("./lib/component-provider");
 
-test().then(() => {
-    test({
-        isServingResults: true
-    });
-});
+let rp;
 
-async function test(options = {}) {
-    console.log("TEST: Lpading Components...");
-    let rp = await ComponentProvider({
+main();
+
+async function main() {
+    rp = ComponentProvider({
         customRepositories: ['felixrdl/seeance-test']
     });
     await rp.init();
+    await test();
+    await test({
+        isServingResults: true
+    });
+}
 
+async function test(options = {}) {
+    console.log("TEST: Loading Components...");
     console.log("TEST: Loading Relevant Components...");
     const analysis = await rp.getAnalysisByName('test-joke');
     const preprocessor = await rp.getPreprocessorByName('testpp');

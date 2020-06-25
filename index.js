@@ -34,7 +34,6 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
     const repoPath = await checkoutRepository(`https://github.com/${repoOwner}/${repoName}`);
 
     // TODO: implement installing dependencies
-    // Acquire input data
 
     let input = await Promise.all(
         gitDatasources.map(async (ds) => {
@@ -47,6 +46,7 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
             githubDatasources.map(async (ds) => {
                 const name = ds.package.name;
                 var result;
+                // TODO: also cache git analyses!
                 if(cache.exists(name)) {
                     result = cache.load(name);
                 } else {
