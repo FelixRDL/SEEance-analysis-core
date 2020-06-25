@@ -27,17 +27,14 @@ module.exports.ComponentProvider = ComponentProvider;
  * @returns {Promise<void>}
  *
  * TODO: remove pkg from signature and use manifest instead (also pass name in signature)
- * TODO: datasources should be passed in, insteads of being loaded
  */
 module.exports.analyze = async function (repoOwner, repoName, datasources, preprocessors, analysis, token = undefined) {
-    console.log(datasources);
     const githubDatasources = datasources.filter((ds) => ds['manifest']['type'].includes('github'));
     const gitDatasources = datasources.filter((ds) => ds['manifest']['type'].endsWith('git'));
     const repoPath = await checkoutRepository(`https://github.com/${repoOwner}/${repoName}`);
 
     // TODO: implement installing dependencies
     // Acquire input data
-    // TODO: implement caching
 
     let input = await Promise.all(
         gitDatasources.map(async (ds) => {
@@ -54,9 +51,9 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
                     result = cache.load(name);
                 } else {
                     result = await ds.module(repoOwner, repoName, token);
-                    cache.store(name, result, 50000);
+                    // TODO: make caching configurable via analysis (--no-cache)
+                    cache.store(name, result, ds.manifest['ttl'] || 6000);
                 }
-
                 return {
                     result: result,
                     manifest: ds.manifest,
@@ -69,14 +66,26 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
         acc[curr.package.name] = curr.result;
         return acc;
     }, {});
-
     for(let preprocessor of preprocessors) {
         input = await preprocessor.module(input, preprocessor.config);
     }
-
     return await analysis.module(input, analysis.config, Visualisation());
 }
 
+/**
+ *
+ * @param {[{
+ *     package: Object,
+ *     module: function
+ *     config: Object
+ * }]} preprocessors
+ * @param {{
+ *     package: Object,
+ *     module: function
+ *     config: Object
+ * }} analysis
+ * @returns {string[]}
+ */
 module.exports.getDependencies = function (preprocessors, analysis) {
     const components = [analysis].concat(preprocessors);
     var depDict = components.map((c) => c.package.seeance.depends_on).reduce((acc, curr) => {

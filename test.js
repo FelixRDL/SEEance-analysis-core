@@ -2,9 +2,13 @@ const http = require('http');
 const core = require('./index');
 const ComponentProvider = require("./lib/component-provider");
 
-test();
+test().then(() => {
+    test({
+        isServingResults: true
+    });
+});
 
-async function test() {
+async function test(options = {}) {
     console.log("TEST: Lpading Components...");
     let rp = await ComponentProvider({
         customRepositories: ['felixrdl/seeance-test']
@@ -32,10 +36,12 @@ async function test() {
 
     // Solution by stackoverflow user JLeXanDR
     // (https://stackoverflow.com/questions/35995273/how-to-run-html-file-using-node-js)
-    console.log("TEST: Serving analysis output on http://localhost:8080")
-    http.createServer(function(request, response) {
-        response.writeHeader(200, {"Content-Type": "text/html"});
-        response.write(result);
-        response.end();
-    }).listen(8080);
+    if (options.isServingResults) {
+        console.log("TEST: Serving analysis output on http://localhost:8080")
+        http.createServer(function (request, response) {
+            response.writeHeader(200, {"Content-Type": "text/html"});
+            response.write(result);
+            response.end();
+        }).listen(8080);
+    }
 }
