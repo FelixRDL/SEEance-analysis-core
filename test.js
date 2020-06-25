@@ -11,7 +11,6 @@ async function test() {
     });
     await rp.init();
 
-
     console.log("TEST: Loading Relevant Components...");
     const analysis = await rp.getAnalysisByName('test-joke');
     const preprocessor = await rp.getPreprocessorByName('testpp');

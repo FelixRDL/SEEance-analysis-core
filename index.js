@@ -2,6 +2,9 @@ var git = require("simple-git").gitP;
 const pathLib = require("path");
 const fs = require("fs");
 const Visualisation = require("./lib/visualization");
+const Cache = require("./lib/cache").Cache;
+var cache = Cache();
+
 const ComponentProvider = require("./lib/component-provider");
 
 module.exports.ComponentProvider = ComponentProvider;
@@ -45,8 +48,17 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
             }
         }).concat(
             githubDatasources.map(async (ds) => {
+                const name = ds.package.name;
+                var result;
+                if(cache.exists(name)) {
+                    result = cache.load(name);
+                } else {
+                    result = await ds.module(repoOwner, repoName, token);
+                    cache.store(name, result, 50000);
+                }
+
                 return {
-                    result: await ds.module(repoOwner, repoName, token),
+                    result: result,
                     manifest: ds.manifest,
                     package: ds.package
                 }
@@ -61,8 +73,6 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
     for(let preprocessor of preprocessors) {
         input = await preprocessor.module(input, preprocessor.config);
     }
-
-    // TODO: preprocessing
 
     return await analysis.module(input, analysis.config, Visualisation());
 }
