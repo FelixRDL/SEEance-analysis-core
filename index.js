@@ -10,9 +10,13 @@ module.exports.ComponentProvider = ComponentProvider;
  *
  * @param repoOwner
  * @param repoName
- * @param preprocessors
+ * @param {[{
+ *     package: Object,
+ *     module: function
+ *     config: Object
+ * }]} preprocessors
  * @param {{
- *     pkg: Object,
+ *     package: Object,
  *     module: function
  *     config: Object
  * }} analysis
@@ -65,7 +69,7 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
 
 module.exports.getDependencies = function (preprocessors, analysis) {
     const components = [analysis].concat(preprocessors);
-    var depDict = components.map((c) => c.pkg.seeance.depends_on).reduce((acc, curr) => {
+    var depDict = components.map((c) => c.package.seeance.depends_on).reduce((acc, curr) => {
         for (let item of curr) {
             acc[item] = item;
         }
