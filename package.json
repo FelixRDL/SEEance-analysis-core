@@ -4,9 +4,9 @@
   "description": "The actual analysis engine for SEEance.",
   "main": "bin/index.js",
   "scripts": {
-    "test": "node ./test rmccue test-repository",
+    "test": "node ./test rmccue test-repository -- --host",
     "lint": "npx standard",
-    "prepublish": "npm test && npm run lint"
+    "prepublish": "node ./test rmccue test-repository && npm run lint"
   },
   "keywords": [],
   "author": "",

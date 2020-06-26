@@ -13,9 +13,11 @@ async function main () {
     customRepositories: ['felixrdl/seeance-test']
   })
   await rp.init()
-  await test()
   await test({
-    isServingResults: true
+    isServingResults: false
+  })
+  await test({
+    isServingResults: process.argv.includes('--host')
   })
 }
 
@@ -42,7 +44,7 @@ async function test (options = {}) {
 
   // Solution by stackoverflow user JLeXanDR
   // (https://stackoverflow.com/questions/35995273/how-to-run-html-file-using-node-js)
-  if (options.isServingResults) {
+  if (options.isServingResults && options.isServingResults === true) {
     console.log('TEST: Serving analysis output on http://localhost:8080')
     http.createServer(function (request, response) {
       response.writeHeader(200, { 'Content-Type': 'text/html' })
