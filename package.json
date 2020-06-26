@@ -5,7 +5,8 @@
   "main": "bin/index.js",
   "scripts": {
     "test": "node ./test rmccue test-repository",
-    "lint": "npx standard"
+    "lint": "npx standard",
+    "prepublish": "npm test && npm run lint"
   },
   "keywords": [],
   "author": "",
