@@ -13,30 +13,43 @@ async function main () {
     customRepositories: ['felixrdl/seeance-test']
   })
   await rp.init()
-  await test({
+  const r1 = await testInstallDependencies({
     isServingResults: false
   })
-  await test({
+  const r2 = await testInstallDependencies({
+    isServingResults: false
+  })
+  console.log(r1, r2)
+
+  await testGraphical({
     isServingResults: process.argv.includes('--host')
   })
 }
 
-async function test (options = {}) {
+async function testGraphical (options = {}) {
+  return test('issues-by-member', undefined, options)
+}
+
+async function testInstallDependencies (options = {}) {
+  return test('test-joke', 'testpp', options)
+}
+
+async function test (analysisName, preprocessorName, options) {
   console.log('TEST: Loading Components...')
   console.log('TEST: Loading Relevant Components...')
-  const analysis = await rp.getAnalysisByName('test-joke')
-  const preprocessor = await rp.getPreprocessorByName('testpp')
-  const dependencies = core.getDependencies(preprocessor, analysis)
+  const analysis = await rp.getAnalysisByName(analysisName)
+  const preprocessor = preprocessorName ? await rp.getPreprocessorByName(preprocessorName) : undefined
+  const dependencies = core.getDependencies(preprocessor || [], analysis)
   const datasources = await Promise.all(dependencies.map(ds => rp.getDatasourceByName(ds)))
 
   console.log('TEST: Exec Analysis...')
   const result = await core.analyze(process.argv[2], process.argv[3],
     datasources,
-    [{
+    preprocessor ? [{
       module: preprocessor.module,
       package: preprocessor.package,
       config: {}
-    }], {
+    }] : [], {
       module: analysis.module,
       pacakge: analysis.package,
       config: {}
@@ -52,4 +65,6 @@ async function test (options = {}) {
       response.end()
     }).listen(8080)
   }
+
+  return result
 }
