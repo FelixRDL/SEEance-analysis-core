@@ -3,7 +3,9 @@ const pathLib = require('path')
 const fs = require('fs')
 const Visualisation = require('./lib/visualization')
 const Cache = require('./lib/cache').Cache
+const RepositoryLock = require('./lib/repository-lock').RepositoryLock
 const cache = Cache()
+const lock = RepositoryLock()
 
 const ComponentProvider = require('./lib/component-provider')
 
@@ -112,10 +114,22 @@ async function checkoutRepository (path) {
   const localPath = pathLib.join(__dirname, '.repos')
   if (!fs.existsSync(localPath)) { fs.mkdirSync(localPath) }
   const target = pathLib.join(localPath, pathLib.basename(path))
-  if (fs.existsSync(target)) {
-    await git(target).pull()
+
+  if (lock.isLocked(path)) {
+    await lock.waitForUnlock()
   } else {
-    await git().clone(path, target)
+    lock.lock(path)
+    if (fs.existsSync(target)) {
+      await git(target).pull()
+    } else {
+      try {
+        await git().clone(path, target)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    lock.unlock(path)
   }
+
   return target
 }

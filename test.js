@@ -11,7 +11,6 @@ if (fs.existsSync(repoFolder)) {
   fs.mkdirSync(repoFolder)
 }
 
-
 main().then(() => {
   console.log('Test executed successfully')
 })
