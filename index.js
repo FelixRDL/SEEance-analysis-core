@@ -51,15 +51,15 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
       }
     }).concat(
       githubDatasources.map(async (ds) => {
-        const name = ds.package.name
+        const cacheName = `${repoOwner}/${repoName}/${ds.package.name}`
         let result
         // TODO: also cache git analyses!
-        if (cache.exists(name)) {
-          result = cache.load(name)
+        if (cache.exists(cacheName)) {
+          result = cache.load(cacheName)
         } else {
           result = await ds.module(repoOwner, repoName, token)
           // TODO: make caching configurable via analysis (--no-cache)
-          cache.store(name, result, ds.manifest.ttl || 6000)
+          cache.store(cacheName, result, ds.manifest.ttl || 6000)
         }
         return {
           result: result,
