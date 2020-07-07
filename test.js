@@ -1,8 +1,16 @@
 const http = require('http')
 const core = require('./index')
 const ComponentProvider = require('./lib/component-provider')
-
+const rimraf = require('rimraf')
+const fs = require('fs')
+const repoFolder = './.repos'
 let rp
+
+if (fs.existsSync(repoFolder)) {
+  rimraf.sync(repoFolder)
+  fs.mkdirSync(repoFolder)
+}
+
 
 main().then(() => {
   console.log('Test executed successfully')
@@ -13,28 +21,49 @@ async function main () {
     customRepositories: ['felixrdl/seeance-test']
   })
   await rp.init()
+
+  // Test concurrent calls
+  await testConcurrent()
+
+  // Check the outcome of three analyses, two operate on the same, one on an other repo
+  // r1 and r2 should be identical, r3 should be different (caching)
   const r1 = await testInstallDependencies({
     isServingResults: false
   })
   const r2 = await testInstallDependencies({
     isServingResults: false
   })
-  console.log(r1, r2)
+  const r3 = await testInstallDependenciesNewSeed({
+    isServingResults: false
+  })
+  console.log(r1, r2, r3)
 
+  // Check the result of a rendered graph
   await testGraphical({
     isServingResults: process.argv.includes('--host')
   })
 }
 
+async function testConcurrent (options = {}) {
+  return Promise.all([
+    testInstallDependenciesNewSeed({ isServingResults: false }),
+    testInstallDependenciesNewSeed({ isServingResults: false })
+  ])
+}
+
 async function testGraphical (options = {}) {
-  return test('issues-by-member', undefined, options)
+  return test('bitcoin-abc', 'bitcoin-abc', 'issues-by-member', undefined, options)
 }
 
 async function testInstallDependencies (options = {}) {
-  return test('test-joke', 'testpp', options)
+  return test(process.argv[2], process.argv[3], 'test-joke', 'testpp', options)
 }
 
-async function test (analysisName, preprocessorName, options) {
+async function testInstallDependenciesNewSeed (options = {}) {
+  return test('bitcoin-abc', 'bitcoin-abc', 'test-joke', 'testpp', options)
+}
+
+async function test (repoOwner, repoName, analysisName, preprocessorName, options) {
   console.log('TEST: Loading Components...')
   console.log('TEST: Loading Relevant Components...')
   const analysis = await rp.getAnalysisByName(analysisName)
@@ -43,7 +72,7 @@ async function test (analysisName, preprocessorName, options) {
   const datasources = await Promise.all(dependencies.map(ds => rp.getDatasourceByName(ds)))
 
   console.log('TEST: Exec Analysis...')
-  const result = await core.analyze(process.argv[2], process.argv[3],
+  const result = await core.analyze(repoOwner, repoName,
     datasources,
     preprocessor ? [{
       module: preprocessor.module,
@@ -65,6 +94,5 @@ async function test (analysisName, preprocessorName, options) {
       response.end()
     }).listen(8080)
   }
-
   return result
 }
