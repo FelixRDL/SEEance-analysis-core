@@ -41,13 +41,30 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
   const remotePath = token ? `https://token:${token}@github.com/${repoOwner}/${repoName}`
     : `https://github.com/${repoOwner}/${repoName}`
   const repoPath = await checkoutRepository(remotePath)
-
   // TODO: implement installing dependencies
 
   let input = await Promise.all(
     gitDatasources.map(async (ds) => {
+      const cacheName = `${repoOwner}/${repoName}/${ds.package.name}`
+      let result
+      if (lock.isLocked(cacheName)) {
+        await lock.waitForUnlock(cacheName)
+      }
+
+      if (cache.exists(cacheName)) {
+        result = cache.load(cacheName)
+      } else {
+        try {
+          lock.lock(cacheName)
+          result = await ds.module(repoPath, token)
+        } finally {
+          lock.unlock(cacheName)
+        }
+        // TODO: make caching configurable via analysis (--no-cache)
+        cache.store(cacheName, result, ds.manifest.ttl || 6000)
+      }
       return {
-        result: await ds.module(repoPath, token),
+        result: result,
         manifest: ds.manifest,
         package: ds.package
       }
@@ -111,24 +128,23 @@ module.exports.getDependencies = function (preprocessors, analysis) {
 }
 
 async function checkoutRepository (path) {
+  if (lock.isLocked(path)) {
+    await lock.waitForUnlock(path)
+  }
+  lock.lock(path)
   const localPath = pathLib.join(__dirname, '.repos')
   if (!fs.existsSync(localPath)) { fs.mkdirSync(localPath) }
   const target = pathLib.join(localPath, pathLib.basename(path))
-
-  if (lock.isLocked(path)) {
-    await lock.waitForUnlock()
+  if (fs.existsSync(target)) {
+    await git(target).pull()
   } else {
-    lock.lock(path)
-    if (fs.existsSync(target)) {
-      await git(target).pull()
-    } else {
-      try {
-        await git().clone(path, target)
-      } catch (e) {
-        console.error(e)
-      }
+    try {
+      await git().clone(path, target)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      lock.unlock(path)
     }
-    lock.unlock(path)
   }
 
   return target

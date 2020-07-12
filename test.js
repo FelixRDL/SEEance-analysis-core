@@ -21,25 +21,18 @@ async function main () {
   })
   await rp.init()
 
+  await testConcurrentBig()
+
   // Test concurrent calls
   await testConcurrent()
 
   // Check the outcome of three analyses, two operate on the same, one on an other repo
   // r1 and r2 should be identical, r3 should be different (caching)
-  const r1 = await testInstallDependencies({
+  await testInstallDependencies({
     isServingResults: false
   })
-  const r2 = await testInstallDependencies({
+  await testInstallDependencies({
     isServingResults: false
-  })
-  const r3 = await testInstallDependenciesNewSeed({
-    isServingResults: false
-  })
-  console.log(r1, r2, r3)
-
-  // Check the result of a rendered graph
-  await testGraphical({
-    isServingResults: process.argv.includes('--host')
   })
 }
 
@@ -50,8 +43,11 @@ async function testConcurrent (options = {}) {
   ])
 }
 
-async function testGraphical (options = {}) {
-  return test('bitcoin-abc', 'bitcoin-abc', 'issues-by-member', undefined, options)
+async function testConcurrentBig (options = {}) {
+  return Promise.all([
+    testCloneBigRepositoryA({ isServingResults: false }),
+    testCloneBigRepositoryB({ isServingResults: false })
+  ])
 }
 
 async function testInstallDependencies (options = {}) {
@@ -62,6 +58,13 @@ async function testInstallDependenciesNewSeed (options = {}) {
   return test('bitcoin-abc', 'bitcoin-abc', 'test-joke', 'testpp', options)
 }
 
+async function testCloneBigRepositoryA (options = {}) {
+  return test('esolneman', 'oop-helper-handout-plugin', 'typical-commit-size', undefined, options)
+}
+async function testCloneBigRepositoryB (options = {}) {
+  return test('esolneman', 'oop-helper-handout-plugin', 'code-evolution', undefined, options)
+}
+
 async function test (repoOwner, repoName, analysisName, preprocessorName, options) {
   console.log('TEST: Loading Components...')
   console.log('TEST: Loading Relevant Components...')
@@ -70,7 +73,7 @@ async function test (repoOwner, repoName, analysisName, preprocessorName, option
   const dependencies = core.getDependencies(preprocessor || [], analysis)
   const datasources = await Promise.all(dependencies.map(ds => rp.getDatasourceByName(ds)))
 
-  console.log('TEST: Exec Analysis...')
+  console.log('TEST: Exec Analysis...', analysisName)
   const result = await core.analyze(repoOwner, repoName,
     datasources,
     preprocessor ? [{
