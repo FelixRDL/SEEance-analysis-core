@@ -6,6 +6,8 @@ const fs = require('fs')
 const repoFolder = './.repos'
 let rp
 
+process.env.SEEANCE_LOG = true
+
 if (fs.existsSync(repoFolder)) {
   rimraf.sync(repoFolder)
   fs.mkdirSync(repoFolder)
@@ -82,7 +84,7 @@ async function test (repoOwner, repoName, analysisName, preprocessorName, option
       config: {}
     }] : [], {
       module: analysis.module,
-      pacakge: analysis.package,
+      package: analysis.package,
       config: {}
     })
 
