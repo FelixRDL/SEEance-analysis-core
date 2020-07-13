@@ -5,6 +5,7 @@ const rimraf = require('rimraf')
 const fs = require('fs')
 const repoFolder = './.repos'
 let rp
+const log = require('./lib/logger').Log()
 
 process.env.SEEANCE_LOG = true
 
@@ -21,7 +22,7 @@ async function main () {
   rp = ComponentProvider({
     customRepositories: ['felixrdl/seeance-test']
   })
-  await rp.init()
+  await log.logPromise('INIT', 'Plugin Provider', rp.init())
 
   await testConcurrentBig()
 
@@ -47,8 +48,8 @@ async function testConcurrent (options = {}) {
 
 async function testConcurrentBig (options = {}) {
   return Promise.all([
-    testCloneBigRepositoryA({ isServingResults: false }),
-    testCloneBigRepositoryB({ isServingResults: false })
+    log.logPromise('TEST', 'repo A 1st run', testCloneBigRepositoryA({ isServingResults: false })),
+    log.logPromise('TEST', 'repo A 2nd run', testCloneBigRepositoryB({ isServingResults: false }))
   ])
 }
 
