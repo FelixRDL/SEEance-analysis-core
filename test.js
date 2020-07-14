@@ -25,7 +25,9 @@ async function main () {
   await log.logPromise('INIT', 'Plugin Provider', rp.init())
 
   await testConcurrentBig()
-  await testConcurrentBig()
+
+  await log.logPromise('TEST', 'repo A 1st run', testCloneBigRepositoryA({ isServingResults: false }))
+  await log.logPromise('TEST', 'repo A 2nd run', testCloneBigRepositoryA({ isServingResults: false }))
 
   // Test concurrent calls
   await testConcurrent()
