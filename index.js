@@ -56,9 +56,7 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
         )
       }
       if (cache.exists(cacheName)) {
-        await log.logPromise('LOAD CACHED GIT SOURCE', logName,
-          result = cache.load(cacheName)
-        )
+        result = cache.load(cacheName)
       } else {
         try {
           lock.lock(cacheName)
