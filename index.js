@@ -51,11 +51,13 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
       const cacheName = `${concatRepoName}/${ds.package.name}`
       let result
       if (lock.isLocked(cacheName)) {
+        log.log('LOCK', 'Waiting for unlock...')
         await log.logPromise('WAIT FOR UNLOCK', logName,
           lock.waitForUnlock(cacheName)
         )
       }
       if (cache.exists(cacheName)) {
+        log.log('CACHE', 'Load Cache...')
         result = cache.load(cacheName)
       } else {
         try {
@@ -63,6 +65,8 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
           result = await log.logPromise('EXECUTE GIT SOURCE', logName,
             ds.module(repoPath, token)
           )
+        } catch (e) {
+          console.error(e)
         } finally {
           lock.unlock(cacheName)
         }
@@ -138,30 +142,32 @@ module.exports.getDependencies = function (preprocessors, analysis) {
 }
 
 async function checkoutRepository (path) {
+  const localPath = pathLib.join(__dirname, '.repos')
   if (lock.isLocked(path)) {
     await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
       lock.waitForUnlock(path)
     )
   }
-  lock.lock(path)
-  const localPath = pathLib.join(__dirname, '.repos')
   if (!fs.existsSync(localPath)) { fs.mkdirSync(localPath) }
   const target = pathLib.join(localPath, pathLib.basename(path))
   if (fs.existsSync(target)) {
-    await log.logPromise('PULLING', path,
-      git(target).pull()
-    )
+    lock.lock(path)
+    try {
+      await log.logPromise('PULLING', path,
+        git(target).pull()
+      )
+    } finally {
+      lock.unlock(path)
+    }
   } else {
     try {
+      lock.lock(path)
       await log.logPromise('CLONING', path,
         git().clone(path, target)
       )
-    } catch (e) {
-      console.error(e)
     } finally {
       lock.unlock(path)
     }
   }
-
   return target
 }

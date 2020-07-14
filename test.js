@@ -25,6 +25,7 @@ async function main () {
   await log.logPromise('INIT', 'Plugin Provider', rp.init())
 
   await testConcurrentBig()
+  await testConcurrentBig()
 
   // Test concurrent calls
   await testConcurrent()
