@@ -66,7 +66,7 @@ async function testInstallDependenciesNewSeed (options = {}) {
 }
 
 async function testCloneBigRepositoryA (options = {}) {
-  return test('esolneman', 'oop-helper-handout-plugin', 'typical-commit-size', undefined, options)
+  return test('esolneman', 'oop-helper-handout-plugin', 'activity-over-time', 'remove-outlier-commits', options)
 }
 async function testCloneBigRepositoryB (options = {}) {
   return test('esolneman', 'oop-helper-handout-plugin', 'code-evolution', undefined, options)

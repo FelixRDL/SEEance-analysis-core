@@ -34,8 +34,6 @@ module.exports.ComponentProvider = ComponentProvider
  * }} analysis
  * @param token
  * @returns {Promise<void>}
- *
- * TODO: remove pkg from signature and use manifest instead (also pass name in signature)
  */
 module.exports.analyze = async function (repoOwner, repoName, datasources, preprocessors, analysis, token = undefined) {
   const githubDatasources = datasources.filter((ds) => ds.manifest.type.includes('github'))
@@ -82,12 +80,10 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
       githubDatasources.map(async (ds) => {
         const cacheName = `${repoOwner}/${repoName}/${ds.package.name}`
         let result
-        // TODO: also cache git analyses!
         if (cache.exists(cacheName)) {
           result = cache.load(cacheName)
         } else {
           result = await ds.module(repoOwner, repoName, token)
-          // TODO: make caching configurable via analysis (--no-cache)
           cache.store(cacheName, result, ds.manifest.ttl || 6000)
         }
         return {
