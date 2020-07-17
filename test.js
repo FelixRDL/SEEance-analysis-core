@@ -21,7 +21,7 @@ main().then(() => {
 async function main () {
   rp = ComponentProvider({
     customRepositories: ['felixrdl/seeance-test'],
-    reloadOnly:true
+    reloadOnly: true
   })
   await log.logPromise('INIT', 'Plugin Provider', rp.init())
 
