@@ -68,7 +68,6 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
         } finally {
           lock.unlock(cacheName)
         }
-        // TODO: make caching time configurable via analysis (--no-cache)
         cache.store(cacheName, result, ds.manifest.ttl || 6000)
       }
       return {
