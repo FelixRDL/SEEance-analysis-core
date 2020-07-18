@@ -99,11 +99,11 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
   }, {})
   for (const preprocessor of preprocessors) {
     input = await log.logPromise('EXECUTE PREPROCESSOR', preprocessor.package.name,
-      preprocessor.module(input, preprocessor.config)
+      preprocessor.module(input, preprocessor.config || {})
     )
   }
   return await log.logPromise('EXECUTE ANALYSIS', analysis.package.name,
-    analysis.module(input, analysis.config, Visualisation())
+    analysis.module(input, analysis.config || {}, Visualisation())
   )
 }
 
