@@ -35,9 +35,14 @@ module.exports.ComponentProvider = ComponentProvider
  * @param token
  * @returns {Promise<void>}
  */
-module.exports.analyze = async function (repoOwner, repoName, datasources, preprocessors, analysis, token = undefined) {
+module.exports.analyze = async function (repoOwner, repoName,
+                                         datasources, preprocessors,
+                                         analysis, token = undefined) {
   const githubDatasources = datasources.filter((ds) => ds.manifest.type.includes('github'))
   const gitDatasources = datasources.filter((ds) => ds.manifest.type.endsWith('git'))
+  const filteredPreprocessors = analysis.package.seeance.ignorePreprocessors ?
+      preprocessors.filter((p) => !analysis.package.seeance.ignorePreprocessors.includes(p.package.name)) :
+      preprocessors
   const remotePath = token ? `https://token:${token}@github.com/${repoOwner}/${repoName}`
     : `https://github.com/${repoOwner}/${repoName}`
   const repoPath = await checkoutRepository(remotePath)
@@ -97,7 +102,7 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
     acc[curr.package.name] = curr.result
     return acc
   }, {})
-  for (const preprocessor of preprocessors) {
+  for (const preprocessor of filteredPreprocessors) {
     input = await log.logPromise('EXECUTE PREPROCESSOR', preprocessor.package.name,
       preprocessor.module(input, preprocessor.config || {})
     )
