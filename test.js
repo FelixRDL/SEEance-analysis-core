@@ -20,12 +20,14 @@ main().then(() => {
 
 async function main () {
   rp = ComponentProvider({
-    customRepositories: ['felixrdl/seeance-test'],
-    reloadOnly: false
+    customRepositories: [],
+    reloadOnly: true
   })
   await log.logPromise('INIT', 'Plugin Provider', rp.init())
 
   await testConcurrentBig()
+
+  await core.cleanup('esolneman', 'oop-helper-handout-plugin')
 
   await log.logPromise('TEST', 'repo A 1st run', testCloneBigRepositoryA({ isServingResults: false }))
   await log.logPromise('TEST', 'repo A 2nd run', testCloneBigRepositoryA({ isServingResults: false }))

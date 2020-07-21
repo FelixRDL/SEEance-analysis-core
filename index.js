@@ -4,14 +4,40 @@ const fs = require('fs')
 const Visualisation = require('./lib/visualization')
 const Cache = require('./lib/cache').Cache
 const RepositoryLock = require('./lib/repository-lock').RepositoryLock
+const repoPath = pathLib.join(__dirname, '.repos')
 const cache = Cache()
 const lock = RepositoryLock()
 const Log = require('./lib/logger').Log
 const log = Log()
+const rimraf = require('rimraf')
 
 const ComponentProvider = require('./lib/component-provider')
 
 module.exports.ComponentProvider = ComponentProvider
+
+/**
+ * Pre-Clone the repository on creation to save time
+ * @param repoOwner
+ * @param repoName
+ * @param token
+ * @returns {Promise<void>}
+ */
+module.exports.prepare = async function(repoOwner, repoName, token) {
+  await checkoutRepository(getPath(repoOwner, repoName, token))
+}
+/**
+ * Remove caches and clones
+ * @param repoOwner
+ * @param repoName
+ * @param token
+ * @returns {Promise<void>}
+ */
+module.exports.cleanup = async function(repoOwner, repoName) {
+  const concatRepoName = `${repoOwner}/${repoName}`
+  const keys = cache.keys().filter(k => k.startsWith(concatRepoName))
+  keys.map(k => cache.delete(k))
+  await clearRepository(pathLib.join(repoPath, repoName))
+}
 
 /**
  *
@@ -39,7 +65,7 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
   const githubDatasources = datasources.filter((ds) => ds.manifest.type.includes('github'))
   const gitDatasources = datasources.filter((ds) => ds.manifest.type.endsWith('git'))
   const filteredPreprocessors = analysis.package.seeance.ignorePreprocessors ? preprocessors.filter((p) => !analysis.package.seeance.ignorePreprocessors.includes(p.package.name)) : preprocessors
-  const remotePath = token ? `https://token:${token}@github.com/${repoOwner}/${repoName}` : `https://github.com/${repoOwner}/${repoName}`
+  const remotePath = getPath(repoOwner, repoName, token)
   const repoPath = await checkoutRepository(remotePath)
 
   let input = await Promise.all(
@@ -136,15 +162,29 @@ module.exports.getDependencies = function (preprocessors, analysis) {
   return Object.keys(depDict)
 }
 
+function getPath(repoOwner, repoName, token) {
+  return token ? `https://token:${token}@github.com/${repoOwner}/${repoName}` : `https://github.com/${repoOwner}/${repoName}`
+}
+
+async function clearRepository (path) {
+  if (lock.isLocked(path)) {
+    await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
+        lock.waitForUnlock(path)
+    )
+  }
+  return new Promise((resolve, reject) => {
+    rimraf(path, {}, resolve)
+  })
+}
+
 async function checkoutRepository (path) {
-  const localPath = pathLib.join(__dirname, '.repos')
   if (lock.isLocked(path)) {
     await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
       lock.waitForUnlock(path)
     )
   }
-  if (!fs.existsSync(localPath)) { fs.mkdirSync(localPath) }
-  const target = pathLib.join(localPath, pathLib.basename(path))
+  if (!fs.existsSync(repoPath)) { fs.mkdirSync(repoPath) }
+  const target = pathLib.join(repoPath, pathLib.basename(path))
   if (fs.existsSync(target)) {
     lock.lock(path)
     try {
