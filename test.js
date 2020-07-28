@@ -16,12 +16,17 @@ if (fs.existsSync(repoFolder)) {
 
 main().then(() => {
   console.log('Test executed successfully')
+  process.exit(0)
 })
 
 async function main () {
   rp = ComponentProvider({
     customRepositories: [],
-    reloadOnly: false
+    reloadOnly: false,
+    onlyLoad: [
+      'activity-over-time',
+      'remove-outliers'
+    ]
   })
   await log.logPromise('INIT', 'Plugin Provider', rp.init())
 
