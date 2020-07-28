@@ -85,7 +85,7 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
         result = cache.load(cacheName)
       } else {
         try {
-          lock.lock(cacheName)
+          lock.lock(cacheName, cacheName)
           result = await log.logPromise('EXECUTE GIT SOURCE', logName,
             ds.module(repoPath, token)
           )
@@ -186,7 +186,7 @@ async function checkoutRepository (path) {
   if (!fs.existsSync(repoPath)) { fs.mkdirSync(repoPath) }
   const target = pathLib.join(repoPath, pathLib.basename(path))
   if (fs.existsSync(target)) {
-    lock.lock(path)
+    lock.lock(path, 'pull')
     try {
       await log.logPromise('PULLING', path,
         git(target).pull()
@@ -196,7 +196,7 @@ async function checkoutRepository (path) {
     }
   } else {
     try {
-      lock.lock(path)
+      lock.lock(path, 'clone')
       await log.logPromise('CLONING', path,
         git().clone(path, target)
       )
