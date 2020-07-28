@@ -1,6 +1,6 @@
 {
   "name": "seeance-analysis-core",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "The actual analysis engine for SEEance.",
   "main": "bin/index.js",
   "scripts": {
