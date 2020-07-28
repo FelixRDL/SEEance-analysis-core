@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node ./test rmccue test-repository -- --host",
     "lint": "npx standard",
-    "prepublishOnly": "node ./test rmccue test-repository && npm run lint"
+    "prepublishOnly": "npm run lint && node ./test rmccue test-repository"
   },
   "keywords": [],
   "author": "",

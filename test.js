@@ -21,7 +21,7 @@ main().then(() => {
 async function main () {
   rp = ComponentProvider({
     customRepositories: [],
-    reloadOnly: true
+    reloadOnly: false
   })
   await log.logPromise('INIT', 'Plugin Provider', rp.init())
 
@@ -31,47 +31,17 @@ async function main () {
 
   await log.logPromise('TEST', 'repo A 1st run', testCloneBigRepositoryA({ isServingResults: false }))
   await log.logPromise('TEST', 'repo A 2nd run', testCloneBigRepositoryA({ isServingResults: false }))
-
-  // Test concurrent calls
-  await testConcurrent()
-
-  // Check the outcome of three analyses, two operate on the same, one on an other repo
-  // r1 and r2 should be identical, r3 should be different (caching)
-  await testInstallDependencies({
-    isServingResults: false
-  })
-  await testInstallDependencies({
-    isServingResults: false
-  })
-}
-
-async function testConcurrent (options = {}) {
-  return Promise.all([
-    testInstallDependenciesNewSeed({ isServingResults: false }),
-    testInstallDependenciesNewSeed({ isServingResults: false })
-  ])
 }
 
 async function testConcurrentBig (options = {}) {
   return Promise.all([
     log.logPromise('TEST', 'repo A 1st run', testCloneBigRepositoryA({ isServingResults: false })),
-    log.logPromise('TEST', 'repo A 2nd run', testCloneBigRepositoryB({ isServingResults: false }))
+    log.logPromise('TEST', 'repo A 2nd run', testCloneBigRepositoryA({ isServingResults: false }))
   ])
 }
 
-async function testInstallDependencies (options = {}) {
-  return test(process.argv[2], process.argv[3], 'test-joke', 'testpp', options)
-}
-
-async function testInstallDependenciesNewSeed (options = {}) {
-  return test('bitcoin-abc', 'bitcoin-abc', 'test-joke', 'testpp', options)
-}
-
 async function testCloneBigRepositoryA (options = {}) {
-  return test('esolneman', 'oop-helper-handout-plugin', 'activity-over-time', 'remove-outlier-commits', options)
-}
-async function testCloneBigRepositoryB (options = {}) {
-  return test('esolneman', 'oop-helper-handout-plugin', 'code-evolution', undefined, options)
+  return test('esolneman', 'oop-helper-handout-plugin', 'activity-over-time', 'remove-outliers', options)
 }
 
 async function test (repoOwner, repoName, analysisName, preprocessorName, options) {

@@ -22,7 +22,7 @@ module.exports.ComponentProvider = ComponentProvider
  * @param token
  * @returns {Promise<void>}
  */
-module.exports.prepare = async function(repoOwner, repoName, token) {
+module.exports.prepare = async function (repoOwner, repoName, token) {
   await checkoutRepository(getPath(repoOwner, repoName, token))
 }
 /**
@@ -32,7 +32,7 @@ module.exports.prepare = async function(repoOwner, repoName, token) {
  * @param token
  * @returns {Promise<void>}
  */
-module.exports.cleanup = async function(repoOwner, repoName) {
+module.exports.cleanup = async function (repoOwner, repoName) {
   const concatRepoName = `${repoOwner}/${repoName}`
   const keys = cache.keys().filter(k => k.startsWith(concatRepoName))
   keys.map(k => cache.delete(k))
@@ -81,7 +81,7 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
         )
       }
       if (cache.exists(cacheName)) {
-        log.log('CACHE', 'Load Cache...')
+        log.log('CACHE', 'Load Cache...' + cacheName)
         result = cache.load(cacheName)
       } else {
         try {
@@ -162,14 +162,14 @@ module.exports.getDependencies = function (preprocessors, analysis) {
   return Object.keys(depDict)
 }
 
-function getPath(repoOwner, repoName, token) {
+function getPath (repoOwner, repoName, token) {
   return token ? `https://token:${token}@github.com/${repoOwner}/${repoName}` : `https://github.com/${repoOwner}/${repoName}`
 }
 
 async function clearRepository (path) {
   if (lock.isLocked(path)) {
     await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
-        lock.waitForUnlock(path)
+      lock.waitForUnlock(path)
     )
   }
   return new Promise((resolve, reject) => {
