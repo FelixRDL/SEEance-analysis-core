@@ -182,12 +182,14 @@ async function clearRepository (path) {
 async function checkoutRepository (path) {
   if (!fs.existsSync(repoPath)) { fs.mkdirSync(repoPath) }
   const target = pathLib.join(repoPath, pathLib.basename(path))
+
+  if (lock.isLocked(path)) {
+    await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
+      lock.waitForUnlock(path)
+    )
+  }
+
   if (!top.isFresh(path)) {
-    if (lock.isLocked(path)) {
-      await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
-        lock.waitForUnlock(path)
-      )
-    }
     if (fs.existsSync(target)) {
       lock.lock(path, 'pull')
       try {
