@@ -4,7 +4,7 @@ const fs = require('fs')
 const Visualisation = require('./lib/visualization')
 const Cache = require('./lib/cache').Cache
 const RepositoryLock = require('./lib/lock').Lock
-const repoPath = pathLib.join(__dirname, '.repos')
+const localRepoPath = pathLib.join(__dirname, '.repos')
 const cache = Cache()
 const lock = RepositoryLock()
 const Log = require('./lib/logger').Log
@@ -38,7 +38,7 @@ module.exports.cleanup = async function (repoOwner, repoName) {
   const concatRepoName = `${repoOwner}/${repoName}`
   const keys = cache.keys().filter(k => k.startsWith(concatRepoName))
   keys.map(k => cache.delete(k))
-  await clearRepository(pathLib.join(repoPath, repoName))
+  await clearRepository(pathLib.join(localRepoPath, repoName))
 }
 
 /**
@@ -64,8 +64,9 @@ module.exports.cleanup = async function (repoOwner, repoName) {
  * @returns {Promise<void>}
  */
 module.exports.analyze = async function (repoOwner, repoName, datasources, preprocessors, analysis, token = undefined) {
-  const githubDatasources = datasources.filter((ds) => ds.manifest.type.includes('github'))
-  const gitDatasources = datasources.filter((ds) => ds.manifest.type.endsWith('git'))
+  const unifiedDatasources = Array.from(new Set(datasources))
+  const githubDatasources = unifiedDatasources.filter((ds) => ds.manifest.type.includes('github'))
+  const gitDatasources = unifiedDatasources.filter((ds) => ds.manifest.type.endsWith('git'))
   const filteredPreprocessors = analysis.package.seeance.ignorePreprocessors ? preprocessors.filter((p) => !analysis.package.seeance.ignorePreprocessors.includes(p.package.name)) : preprocessors
   const remotePath = getPath(repoOwner, repoName, token)
   const repoPath = await checkoutRepository(remotePath)
@@ -179,38 +180,38 @@ async function clearRepository (path) {
   })
 }
 
-async function checkoutRepository (path) {
-  if (!fs.existsSync(repoPath)) { fs.mkdirSync(repoPath) }
-  const target = pathLib.join(repoPath, pathLib.basename(path))
+async function checkoutRepository (repoPath) {
+  if (!fs.existsSync(localRepoPath)) { fs.mkdirSync(localRepoPath) }
+  const localTarget = pathLib.join(localRepoPath, pathLib.basename(repoPath))
 
-  if (lock.isLocked(path)) {
-    await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
-      lock.waitForUnlock(path)
+  if (lock.isLocked(repoPath)) {
+    await log.logPromise('CHECKOUT WAIT FOR UNLOCK', repoPath,
+      lock.waitForUnlock(repoPath)
     )
   }
 
-  if (!top.isFresh(path)) {
-    if (fs.existsSync(target)) {
-      lock.lock(path, 'pull')
+  if (!(top.isFresh(localTarget) && fs.existsSync(localTarget))) {
+    if (fs.existsSync(localTarget)) {
+      lock.lock(repoPath, 'pull')
       try {
-        await log.logPromise('PULLING', path,
-          git(target).pull()
+        await log.logPromise('PULLING', repoPath,
+          git(localTarget).pull()
         )
       } finally {
-        lock.unlock(path)
+        lock.unlock(repoPath)
       }
     } else {
       try {
-        lock.lock(path, 'clone')
-        await log.logPromise('CLONING', path,
-          git().clone(path, target)
+        lock.lock(repoPath, 'clone')
+        await log.logPromise('CLONING', repoPath,
+          git().clone(repoPath, localTarget)
         )
       } finally {
-        lock.unlock(path)
+        lock.unlock(repoPath)
       }
     }
-    top.registerRefresh(path)
+    top.registerRefresh(localTarget)
   }
 
-  return Promise.resolve(target)
+  return localTarget
 }
