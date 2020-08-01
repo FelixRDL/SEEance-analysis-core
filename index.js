@@ -3,7 +3,7 @@ const pathLib = require('path')
 const fs = require('fs')
 const Visualisation = require('./lib/visualization')
 const Cache = require('./lib/cache').Cache
-const RepositoryLock = require('./lib/repository-lock').RepositoryLock
+const RepositoryLock = require('./lib/repository-lock').Lock
 const repoPath = pathLib.join(__dirname, '.repos')
 const cache = Cache()
 const lock = RepositoryLock()
@@ -12,6 +12,8 @@ const log = Log()
 const rimraf = require('rimraf')
 
 const ComponentProvider = require('./lib/component-provider')
+const Topicality = require('./lib/topicality').Topicality
+const top = new Topicality()
 
 module.exports.ComponentProvider = ComponentProvider
 
@@ -178,31 +180,35 @@ async function clearRepository (path) {
 }
 
 async function checkoutRepository (path) {
-  if (lock.isLocked(path)) {
-    await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
-      lock.waitForUnlock(path)
-    )
-  }
   if (!fs.existsSync(repoPath)) { fs.mkdirSync(repoPath) }
   const target = pathLib.join(repoPath, pathLib.basename(path))
-  if (fs.existsSync(target)) {
-    lock.lock(path, 'pull')
-    try {
-      await log.logPromise('PULLING', path,
-        git(target).pull()
+  if (!top.isFresh(path)) {
+    if (lock.isLocked(path)) {
+      await log.logPromise('CHECKOUT WAIT FOR UNLOCK', path,
+        lock.waitForUnlock(path)
       )
-    } finally {
-      lock.unlock(path)
     }
-  } else {
-    try {
-      lock.lock(path, 'clone')
-      await log.logPromise('CLONING', path,
-        git().clone(path, target)
-      )
-    } finally {
-      lock.unlock(path)
+    if (fs.existsSync(target)) {
+      lock.lock(path, 'pull')
+      try {
+        await log.logPromise('PULLING', path,
+          git(target).pull()
+        )
+      } finally {
+        lock.unlock(path)
+      }
+    } else {
+      try {
+        lock.lock(path, 'clone')
+        await log.logPromise('CLONING', path,
+          git().clone(path, target)
+        )
+      } finally {
+        lock.unlock(path)
+      }
     }
+    top.registerRefresh(path)
   }
-  return target
+
+  return Promise.resolve(target)
 }
