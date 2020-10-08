@@ -69,7 +69,10 @@ module.exports.analyze = async function (repoOwner, repoName, datasources, prepr
   const gitDatasources = unifiedDatasources.filter((ds) => ds.manifest.type.endsWith('git'))
   const filteredPreprocessors = analysis.package.seeance.ignorePreprocessors ? preprocessors.filter((p) => !analysis.package.seeance.ignorePreprocessors.includes(p.package.name)) : preprocessors
   const remotePath = getPath(repoOwner, repoName, token)
+
+  console.log('START', 'CHECKOUT')
   const repoPath = await checkoutRepository(remotePath)
+  console.log('END', 'CHECKOUT')
 
   let input = await Promise.all(
     gitDatasources.map(async (ds) => {
