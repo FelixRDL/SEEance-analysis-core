@@ -16,7 +16,7 @@
     "node-cache": "^5.1.1",
     "plotly": "^1.0.6",
     "rimraf": "^3.0.2",
-    "simple-git": "^2.8.0",
+    "simple-git": "^3.5.0",
     "yargs": "^15.3.1"
   },
   "seeance": {},
